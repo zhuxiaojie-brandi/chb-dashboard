@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHB功能性治愈药物市场测算 v3</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background:#f5f7fa; color:#333; }
+  .header { background:linear-gradient(135deg,#1a3a5c,#2d5a87); color:#fff; padding:18px 28px; }
+  .header h1 { font-size:20px; font-weight:600; }
+  .header .sub { font-size:12px; opacity:0.8; margin-top:3px; }
+  .container { display:flex; max-width:1800px; margin:0 auto; }
+  .sidebar { width:330px; min-width:330px; background:#fff; border-right:1px solid #e0e0e0; overflow-y:auto; max-height:calc(100vh - 66px); position:sticky; top:0; }
+  .sidebar::-webkit-scrollbar { width:5px; }
+  .sidebar::-webkit-scrollbar-thumb { background:#ccc; border-radius:3px; }
+  .section { border-bottom:1px solid #eee; }
+  .sec-hdr { padding:10px 14px; background:#f8f9fa; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:600; color:#1a3a5c; user-select:none; }
+  .sec-hdr:hover { background:#eef1f5; }
+  .sec-hdr .arr { transition:transform 0.2s; font-size:11px; }
+  .sec-hdr .arr.open { transform:rotate(90deg); }
+  .sec-body { padding:6px 14px 14px; }
+  .sec-body.hide { display:none; }
+  .ptable { width:100%; border-collapse:collapse; font-size:11px; }
+  .ptable th { background:#e8ecf1; padding:5px 2px; text-align:center; font-weight:600; position:sticky; top:0; z-index:1; font-size:10px; }
+  .ptable th:first-child { position:sticky; left:0; z-index:2; min-width:42px; }
+  .ptable td { padding:2px; text-align:center; border:1px solid #eee; }
+  .ptable td:first-child { font-weight:600; background:#f8f9fa; position:sticky; left:0; z-index:1; font-size:10px; }
+  .ptable input { width:46px; padding:1px; border:1px solid #ccc; border-radius:2px; text-align:center; font-size:10px; background:#fffbe6; }
+  .ptable input:focus { border-color:#2d5a87; outline:none; box-shadow:0 0 2px rgba(45,90,135,0.3); }
+  .attr-row { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:12px; }
+  .attr-row label { width:50px; font-weight:600; font-size:12px; }
+  .attr-row input { width:60px; padding:2px; border:1px solid #ccc; border-radius:2px; text-align:center; font-size:11px; background:#fffbe6; }
+  .attr-row input:focus { border-color:#2d5a87; outline:none; }
+  .btn-row { padding:10px 14px; display:flex; gap:6px; flex-wrap:wrap; }
+  .btn { padding:7px 14px; border:none; border-radius:4px; font-size:12px; font-weight:600; cursor:pointer; }
+  .btn-p { background:#2d5a87; color:#fff; }
+  .btn-p:hover { background:#1a3a5c; }
+  .btn-s { background:#e0e7ef; color:#333; }
+  .btn-s:hover { background:#ccd5de; }
+  .btn-d { background:#e74c3c; color:#fff; }
+  .btn-d:hover { background:#c0392b; }
+  .main { flex:1; padding:16px; overflow-y:auto; max-height:calc(100vh - 66px); }
+  .kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-bottom:16px; }
+  .kpi { background:#fff; border-radius:6px; padding:14px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #2d5a87; }
+  .kpi .lb { font-size:11px; color:#888; }
+  .kpi .vl { font-size:22px; font-weight:700; color:#1a3a5c; margin-top:2px; }
+  .kpi .sb { font-size:10px; color:#999; margin-top:2px; }
+  .kpi.pk { border-left-color:#e74c3c; }
+  .kpi.cr { border-left-color:#27ae60; }
+  .kpi.tr { border-left-color:#f39c12; }
+  .kpi.win { border-left-color:#8e44ad; }
+  .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+  .cbox { background:#fff; border-radius:6px; padding:14px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .cbox h3 { font-size:13px; font-weight:600; margin-bottom:10px; color:#1a3a5c; }
+  .cbox canvas { width:100%; height:260px; display:block; }
+  .rbox { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); overflow:hidden; margin-bottom:16px; }
+  .rbox h3 { padding:12px 14px; font-size:13px; font-weight:600; background:#f8f9fa; border-bottom:1px solid #eee; color:#1a3a5c; }
+  .tw { overflow-x:auto; max-height:500px; overflow-y:auto; }
+  .rt { width:100%; border-collapse:collapse; font-size:11px; }
+  .rt th { background:#e8ecf1; padding:6px 8px; text-align:right; font-weight:600; position:sticky; top:0; z-index:1; border-bottom:2px solid #ccc; font-size:10px; }
+  .rt th:first-child { position:sticky; left:0; z-index:2; text-align:center; min-width:42px; }
+  .rt td { padding:5px 8px; text-align:right; border-bottom:1px solid #f0f0f0; }
+  .rt td:first-child { position:sticky; left:0; z-index:1; text-align:center; font-weight:600; background:#f8f9fa; }
+  .rt tr:hover td { background:#f0f6ff; }
+  .rt .hl { background:#fff0f0!important; font-weight:700; }
+  .save-note { padding:6px 14px 10px; font-size:10px; color:#27ae60; }
+  @media(max-width:900px) {
+    .container { flex-direction:column; }
+    .sidebar { width:100%; min-width:auto; max-height:none; position:static; }
+    .main { max-height:none; }
+    .chart-row { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>CHB功能性治愈药物市场测算 v3</h1>
+  <div class="sub">交互式参数面板 — 修改黄色数字后自动保存，下次打开自动恢复 | 单位：万人</div>
+</div>
+<div class="container">
+<div class="sidebar">
+
+  <div class="section">
+    <div class="sec-hdr" onclick="tog(this)"><span>📊 治疗率 % (逐年×年龄组)</span><span class="arr open">▶</span></div>
+    <div class="sec-body" id="sec-up"><div style="overflow-x:auto"><table class="ptable" id="tbl-up"></table></div></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr" onclick="tog(this)"><span>💊 治愈率 % (逐年)</span><span class="arr open">▶</span></div>
+    <div class="sec-body" id="sec-cu"><div style="overflow-x:auto"><table class="ptable" id="tbl-cu"></table></div></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr" onclick="tog(this)"><span>🔄 重治率 % (逐年×年龄组)</span><span class="arr open">▶</span></div>
+    <div class="sec-body" id="sec-rt"><div style="overflow-x:auto"><table class="ptable" id="tbl-rt"></table></div></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr" onclick="tog(this)"><span>📉 衰减率 (按年龄组)</span><span class="arr open">▶</span></div>
+    <div class="sec-body">
+      <div class="attr-row"><label>&lt;20</label><input type="number" id="at0" step="0.01" value="0.06" onchange="go()"> <span style="font-size:10px;color:#888">6%</span></div>
+      <div class="attr-row"><label>20-49</label><input type="number" id="at1" step="0.01" value="0.03" onchange="go()"> <span style="font-size:10px;color:#888">3%</span></div>
+      <div class="attr-row"><label>50-59</label><input type="number" id="at2" step="0.01" value="0.04" onchange="go()"> <span style="font-size:10px;color:#888">4%</span></div>
+      <div class="attr-row"><label>60-69</label><input type="number" id="at3" step="0.01" value="0.06" onchange="go()"> <span style="font-size:10px;color:#888">6%</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr" onclick="tog(this)"><span>🏥 CHB患者数 (万人)</span><span class="arr open">▶</span></div>
+    <div class="sec-body" id="sec-ch"><div style="overflow-x:auto"><table class="ptable" id="tbl-ch"></table></div></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-p" onclick="go()">🔄 重算</button>
+    <button class="btn btn-s" onclick="reset()">↩ 恢复默认</button>
+    <button class="btn btn-d" onclick="clearSave()">🗑 清除保存</button>
+    <button class="btn btn-s" onclick="csv()">📥 导出CSV</button>
+  </div>
+  <div class="save-note" id="save-note"></div>
+</div>
+
+<div class="main" id="main">
+  <div class="kpi-row" id="kpis"></div>
+  <div class="chart-row">
+    <div class="cbox"><h3>📈 年度治疗与累积治愈</h3><canvas id="c1"></canvas></div>
+    <div class="cbox"><h3>📊 治疗率与治愈率趋势</h3><canvas id="c2"></canvas></div>
+  </div>
+  <div class="chart-row">
+    <div class="cbox"><h3>🎂 各年龄组治疗分布</h3><canvas id="c3"></canvas></div>
+    <div class="cbox"><h3>🔄 首次治疗 vs 重治比例</h3><canvas id="c4"></canvas></div>
+  </div>
+  <div class="rbox">
+    <h3>📋 逐年预测结果汇总</h3>
+    <div class="tw"><table class="rt" id="rtbl"></table></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ===================== CONSTANTS =====================
+var YR=[];for(var y=2026;y<=2050;y++)YR.push(y);
+var AG=['<20','20-49','50-59','60-69'];
+var AG5=['<20','20-49','50-59','60-69','70+'];
+var LS_KEY='chb_v3_params';
+
+// ===================== DEFAULT PARAMS (new values) =====================
+var D_CHB={
+  2026:{'<20':47,'20-49':1017,'50-59':740,'60-69':635,'70+':362},
+  2027:{'<20':44,'20-49':1000,'50-59':748,'60-69':637,'70+':373},
+  2028:{'<20':41,'20-49':978,'50-59':752,'60-69':639,'70+':383},
+  2029:{'<20':38,'20-49':952,'50-59':754,'60-69':639,'70+':391},
+  2030:{'<20':35,'20-49':922,'50-59':753,'60-69':638,'70+':399},
+  2031:{'<20':32,'20-49':888,'50-59':749,'60-69':637,'70+':405},
+  2032:{'<20':30,'20-49':849,'50-59':743,'60-69':634,'70+':412},
+  2033:{'<20':27,'20-49':807,'50-59':733,'60-69':631,'70+':417},
+  2034:{'<20':24,'20-49':761,'50-59':721,'60-69':626,'70+':422},
+  2035:{'<20':22,'20-49':724,'50-59':697,'60-69':612,'70+':420},
+  2036:{'<20':20,'20-49':686,'50-59':672,'60-69':598,'70+':419},
+  2037:{'<20':17,'20-49':648,'50-59':648,'60-69':585,'70+':417},
+  2038:{'<20':15,'20-49':610,'50-59':624,'60-69':572,'70+':415},
+  2039:{'<20':13,'20-49':573,'50-59':601,'60-69':559,'70+':413},
+  2040:{'<20':11,'20-49':536,'50-59':578,'60-69':548,'70+':412},
+  2041:{'<20':9,'20-49':500,'50-59':555,'60-69':536,'70+':411},
+  2042:{'<20':6,'20-49':463,'50-59':533,'60-69':526,'70+':411},
+  2043:{'<20':4,'20-49':428,'50-59':512,'60-69':516,'70+':411},
+  2044:{'<20':2,'20-49':392,'50-59':491,'60-69':506,'70+':411},
+  2045:{'<20':0,'20-49':374,'50-59':467,'60-69':487,'70+':402},
+  2046:{'<20':0,'20-49':353,'50-59':443,'60-69':468,'70+':395},
+  2047:{'<20':0,'20-49':333,'50-59':420,'60-69':451,'70+':389},
+  2048:{'<20':0,'20-49':313,'50-59':397,'60-69':434,'70+':383},
+  2049:{'<20':0,'20-49':293,'50-59':375,'60-69':418,'70+':379},
+  2050:{'<20':0,'20-49':274,'50-59':353,'60-69':402,'70+':375}
+};
+
+function defUP(ag,yr){
+  if(ag==='<20'){if(yr===2026)return 0.5;if(yr===2027)return 1.0;return Math.min(1+(yr-2027),25);}
+  if(ag==='20-49'){if(yr===2026)return 1;if(yr===2027)return 2;if(yr===2028)return 3;if(yr===2029)return 4;if(yr<=2035)return Math.min(4+(yr-2029)*2,15);return 15+(yr-2035);}
+  if(ag==='50-59'){if(yr===2026)return 0.5;if(yr===2027)return 1.0;return Math.min(1+(yr-2027),15);}
+  if(ag==='60-69'){if(yr===2026)return 0.5;if(yr===2027)return 1.0;return Math.min(1+(yr-2027),10);}
+  return 0;
+}
+
+function defRT(ag,yr){
+  if(ag==='<20'){if(yr<=2030)return 0;if(yr===2031)return 1.0;return Math.min(1+(yr-2031),15);}
+  if(ag==='20-49'){if(yr<=2030)return 0;if(yr===2031)return 1.0;return Math.min(1+(yr-2031)*2,10);}
+  if(ag==='50-59'){if(yr<=2030)return 0;if(yr===2031)return 0.5;return Math.min(0.5+(yr-2031)*0.5,5);}
+  if(ag==='60-69'){return 0;}
+  return 0;
+}
+
+var D_CU={2026:10.0,2027:12.0,2028:15.0,2029:18.0,2030:20.0,2032:22.0,2033:24.0,2034:26.0,2035:28.0,2036:30.0,2037:32.0,2038:34.0,2039:36.0,2040:38.0,2041:40.0};
+
+function defCU(yr){
+  var ks=Object.keys(D_CU).map(Number).sort(function(a,b){return a-b;});
+  if(yr<=ks[0])return D_CU[ks[0]];
+  if(yr>=ks[ks.length-1])return D_CU[ks[ks.length-1]];
+  var p=ks[0],n=ks[ks.length-1];
+  for(var i=0;i<ks.length-1;i++){if(yr>=ks[i]&&yr<=ks[i+1]){p=ks[i];n=ks[i+1];break;}}
+  if(p===n)return D_CU[p];
+  var t=(yr-p)/(n-p);
+  return D_CU[p]*(1-t)+D_CU[n]*t;
+}
+
+var D_AT={'<20':0.06,'20-49':0.03,'50-59':0.04,'60-69':0.06};
+
+// ===================== HELPERS =====================
+function R(v){return Math.round(v);}
+function F(v){return R(v).toLocaleString();}
+function agid(ag){return ag.replace('<','lt');}
+function tog(h){var b=h.nextElementSibling;var a=h.querySelector('.arr');b.classList.toggle('hide');a.classList.toggle('open');}
+
+// ===================== LOCALSTORAGE =====================
+function saveParams(){
+  var data={};
+  // Uptake
+  data.up={};
+  for(var a=0;a<AG.length;a++){
+    var ag=AG[a];data.up[ag]={};
+    for(var i=0;i<YR.length;i++){
+      var yr=YR[i];
+      var el=document.getElementById('up-'+agid(ag)+'-'+yr);
+      data.up[ag][yr]=el?el.value:null;
+    }
+  }
+  // Cure
+  data.cu={};
+  for(var i=0;i<YR.length;i++){var yr=YR[i];var el=document.getElementById('cu-'+yr);data.cu[yr]=el?el.value:null;}
+  // Retry
+  data.rt={};
+  for(var a=0;a<AG.length;a++){
+    var ag=AG[a];data.rt[ag]={};
+    for(var i=0;i<YR.length;i++){
+      var yr=YR[i];var el=document.getElementById('rt-'+agid(ag)+'-'+yr);
+      data.rt[ag][yr]=el?el.value:null;
+    }
+  }
+  // Attrition
+  data.at=[document.getElementById('at0').value,document.getElementById('at1').value,document.getElementById('at2').value,document.getElementById('at3').value];
+  // CHB
+  data.chb={};
+  for(var a=0;a<AG5.length;a++){
+    var ag=AG5[a];data.chb[ag]={};
+    for(var i=0;i<YR.length;i++){
+      var yr=YR[i];var el=document.getElementById('ch-'+agid(ag)+'-'+yr);
+      data.chb[ag][yr]=el?el.value:null;
+    }
+  }
+  try{localStorage.setItem(LS_KEY,JSON.stringify(data));}catch(e){}
+}
+
+function loadParams(){
+  try{var raw=localStorage.getItem(LS_KEY);return raw?JSON.parse(raw):null;}catch(e){return null;}
+}
+
+function clearSave(){
+  try{localStorage.removeItem(LS_KEY);}catch(e){}
+  reset();
+}
+
+// ===================== READ PARAMS =====================
+function readP(){
+  var chb={},up={},cu={},rt={};
+  for(var i=0;i<YR.length;i++){
+    var yr=YR[i];chb[yr]={};
+    for(var j=0;j<AG5.length;j++){
+      var ag=AG5[j];var el=document.getElementById('ch-'+agid(ag)+'-'+yr);
+      chb[yr][ag]=el?parseFloat(el.value)||0:D_CHB[yr][ag];
+    }
+    var cel=document.getElementById('cu-'+yr);
+    cu[yr]=cel?parseFloat(cel.value)/100:defCU(yr)/100;
+  }
+  for(var a=0;a<AG.length;a++){
+    var ag=AG[a];up[ag]={};rt[ag]={};
+    for(var i=0;i<YR.length;i++){
+      var yr=YR[i];
+      var ue=document.getElementById('up-'+agid(ag)+'-'+yr);
+      up[ag][yr]=ue?parseFloat(ue.value)/100:defUP(ag,yr)/100;
+      var re=document.getElementById('rt-'+agid(ag)+'-'+yr);
+      rt[ag][yr]=re?parseFloat(re.value)/100:defRT(ag,yr)/100;
+    }
+  }
+  var at={};
+  at['<20']=parseFloat(document.getElementById('at0').value);
+  at['20-49']=parseFloat(document.getElementById('at1').value);
+  at['50-59']=parseFloat(document.getElementById('at2').value);
+  at['60-69']=parseFloat(document.getElementById('at3').value);
+  return {chb:chb,up:up,cu:cu,rt:rt,at:at};
+}
+
+// ===================== MODEL =====================
+// 重治逻辑v2: 次年即时重治, 保证不重复
+// 每年首次治疗失败的人 × 重治率 → 进入pending队列 → 次年重治 → 失败则进入failed_twice永久退出
+function model(P){
+  var chb=P.chb,up=P.up,cu=P.cu,rt=P.rt,at=P.at;
+  var SY=2027;
+  var ut={},fo={},ft={},cd={},pr={};
+  for(var a=0;a<AG.length;a++){var ag=AG[a];ut[ag]=chb[2026][ag];fo[ag]=0;ft[ag]=0;cd[ag]=0;pr[ag]=0;}
+  var res={};var ct=0;
+  for(var i=0;i<YR.length;i++){
+    var yr=YR[i];
+    var c70=0;for(var a=0;a<AG.length;a++)c70+=chb[yr][AG[a]];
+    var ctt=c70+chb[yr]["70+"]; 
+    var cr=cu[yr];
+    if(yr<SY){
+      for(var a=0;a<AG.length;a++){
+        var ag=AG[a];ut[ag]*=(1-at[ag]);ut[ag]=Math.min(ut[ag],chb[yr][ag]);ut[ag]=Math.max(0,ut[ag]);
+      }
+      var pool=0;for(var a=0;a<AG.length;a++)pool+=ut[ag];
+      res[yr]={yr:yr,ctt:ctt,c70:c70,pool:pool,ft:0,rt:0,tt:0,nc:0,cc:0,ct:0,
+        ut:{},fo:{},ft2:{},cd:{},ad:{},ur:{},rr:{},cr:cr};
+      for(var a=0;a<AG.length;a++){var ag=AG[a];res[yr].ut[ag]=ut[ag];res[yr].fo[ag]=fo[ag];res[yr].ft2[ag]=ft[ag];res[yr].cd[ag]=cd[ag];}
+      continue;
+    }
+    var tft=0,trt=0,tnc=0;var ur={},rr={},ad={};
+    for(var a=0;a<AG.length;a++){
+      var ag=AG[a];
+      var u=up[ag][yr],r=rt[ag][yr];
+      ur[ag]=u;rr[ag]=r;
+      ut[ag]*=(1-at[ag]);fo[ag]*=(1-at[ag]);ft[ag]*=(1-at[ag]);cd[ag]*=(1-at[ag]);pr[ag]*=(1-at[ag]);
+      ut[ag]=Math.min(ut[ag],chb[yr][ag]);ut[ag]=Math.max(0,ut[ag]);
+      var first=ut[ag]*u;var fc=first*cr;var ff=first*(1-cr);
+      var re=pr[ag];var rc=re*cr;var rf=re*(1-cr);
+      ut[ag]=Math.max(0,ut[ag]-first);
+      pr[ag]=ff*r;fo[ag]=pr[ag];
+      ft[ag]+=rf;cd[ag]+=fc+rc;
+      tft+=first;trt+=re;tnc+=fc+rc;
+      ad[ag]={ft:first,rt:re,nc:fc+rc};
+    }
+    var tt=tft+trt;ct+=tt;
+    var cct=0;for(var a=0;a<AG.length;a++)cct+=cd[ag];
+    var pool=0;for(var a=0;a<AG.length;a++)pool+=ut[ag]+fo[ag];
+    res[yr]={yr:yr,ctt:ctt,c70:c70,pool:pool,ft:tft,rt:trt,tt:tt,nc:tnc,cc:cct,ct:ct,
+      ut:{},fo:{},ft2:{},cd:{},ad:ad,ur:ur,rr:rr,cr:cr};
+    for(var a=0;a<AG.length;a++){var ag=AG[a];res[yr].ut[ag]=ut[ag];res[yr].fo[ag]=fo[ag];res[yr].ft2[ag]=ft[ag];res[yr].cd[ag]=cd[ag];}
+  }
+  return res;
+}
+
+// ===================== CANVAS HELPERS =====================
+function setupCanvas(id){
+  var c=document.getElementById(id);
+  var dpr=window.devicePixelRatio||1;
+  var rect=c.getBoundingClientRect();
+  if(rect.width<10)return null;
+  c.width=rect.width*dpr;c.height=rect.height*dpr;
+  var ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+  return {ctx:ctx,w:rect.width,h:rect.height};
+}
+
+// ===================== CHART 1: Treatment + Cumulative Cure =====================
+function drawChart1(res){
+  var s=setupCanvas('c1');if(!s)return;
+  var ctx=s.ctx,W=s.w,H=s.h,pad={t:30,r:60,b:40,l:50};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  var treat=YR.map(function(y){return res[y].tt;});
+  var cumC=YR.map(function(y){return res[y].cc;});
+  var maxT=0;for(var i=0;i<treat.length;i++)if(treat[i]>maxT)maxT=treat[i];
+  var maxC=0;for(var i=0;i<cumC.length;i++)if(cumC[i]>maxC)maxC=cumC[i];
+  maxT=Math.ceil(maxT/50)*50;if(maxT<10)maxT=10;
+  maxC=Math.ceil(maxC/100)*100;if(maxC<10)maxC=10;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#e8e8e8';ctx.lineWidth=0.5;
+  for(var i=0;i<=5;i++){var y=pad.t+ch-ch*i/5;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(Math.round(maxT*i/5),pad.l-5,y+3);}
+  for(var i=0;i<=5;i++){var y=pad.t+ch-ch*i/5;ctx.fillStyle='#27ae60';ctx.font='10px sans-serif';ctx.textAlign='left';ctx.fillText(Math.round(maxC*i/5),pad.l+cw+5,y+3);}
+  ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='center';
+  for(var i=0;i<YR.length;i+=3){var x=pad.l+cw*i/(YR.length-1);ctx.fillText(YR[i],x,H-pad.b+15);}
+  var bw=cw/YR.length*0.7;
+  for(var i=0;i<YR.length;i++){var x=pad.l+cw*i/(YR.length-1)-bw/2;var h=ch*treat[i]/maxT;var grd=ctx.createLinearGradient(x,pad.t+ch-h,x,pad.t+ch);grd.addColorStop(0,'rgba(45,90,135,0.9)');grd.addColorStop(1,'rgba(45,90,135,0.5)');ctx.fillStyle=grd;ctx.fillRect(x,pad.t+ch-h,bw,h);}
+  ctx.strokeStyle='#27ae60';ctx.lineWidth=2.5;ctx.beginPath();
+  for(var i=0;i<YR.length;i++){var x=pad.l+cw*i/(YR.length-1);var y=pad.t+ch-ch*cumC[i]/maxC;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.stroke();
+  ctx.fillStyle='rgba(45,90,135,0.7)';ctx.fillRect(pad.l,5,12,12);ctx.fillStyle='#333';ctx.font='11px sans-serif';ctx.textAlign='left';ctx.fillText('年度总治疗(万)',pad.l+16,15);
+  ctx.strokeStyle='#27ae60';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pad.l+110,11);ctx.lineTo(pad.l+122,11);ctx.stroke();ctx.fillText('累积治愈(万)',pad.l+126,15);
+}
+
+// ===================== CHART 2: Rate Trends =====================
+function drawChart2(res){
+  var s=setupCanvas('c2');if(!s)return;
+  var ctx=s.ctx,W=s.w,H=s.h,pad={t:30,r:20,b:40,l:50};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  var up49=YR.map(function(y){return(res[y].ur['20-49']||0)*100;});
+  var cure=YR.map(function(y){return(res[y].cr||0)*100;});
+  var maxV=100;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#e8e8e8';ctx.lineWidth=0.5;
+  for(var i=0;i<=5;i++){var y=pad.t+ch-ch*i/5;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(Math.round(maxV*i/5)+'%',pad.l-5,y+3);}
+  ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='center';
+  for(var i=0;i<YR.length;i+=3){var x=pad.l+cw*i/(YR.length-1);ctx.fillText(YR[i],x,H-pad.b+15);}
+  ctx.strokeStyle='#2d5a87';ctx.lineWidth=2;ctx.beginPath();
+  for(var i=0;i<YR.length;i++){var x=pad.l+cw*i/(YR.length-1);var y=pad.t+ch-ch*up49[i]/maxV;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.stroke();
+  ctx.strokeStyle='#e74c3c';ctx.lineWidth=2;ctx.beginPath();
+  for(var i=0;i<YR.length;i++){var x=pad.l+cw*i/(YR.length-1);var y=pad.t+ch-ch*cure[i]/maxV;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.stroke();
+  ctx.strokeStyle='#2d5a87';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pad.l,11);ctx.lineTo(pad.l+12,11);ctx.stroke();
+  ctx.fillStyle='#333';ctx.font='11px sans-serif';ctx.textAlign='left';ctx.fillText('治疗率 20-49(%)',pad.l+16,15);
+  ctx.strokeStyle='#e74c3c';ctx.beginPath();ctx.moveTo(pad.l+130,11);ctx.lineTo(pad.l+142,11);ctx.stroke();
+  ctx.fillText('治愈率(%)',pad.l+146,15);
+}
+
+// ===================== CHART 3: Age Distribution =====================
+function drawChart3(res){
+  var s=setupCanvas('c3');if(!s)return;
+  var ctx=s.ctx,W=s.w,H=s.h,pad={t:30,r:20,b:40,l:50};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  var d={};for(var a=0;a<AG.length;a++)d[AG[a]]=[];
+  for(var i=0;i<YR.length;i++){var yr=YR[i];var ad=res[yr].ad;for(var a=0;a<AG.length;a++){var ag=AG[a];d[ag].push(ad[ag]?(ad[ag].ft+(ad[ag].rt||0)):0);}}
+  var colors=['#3498db','#e74c3c','#f39c12','#9b59b6'];
+  var maxV=0;for(var i=0;i<YR.length;i++){var sum=0;for(var a=0;a<AG.length;a++)sum+=d[AG[a]][i];if(sum>maxV)maxV=sum;}
+  maxV=Math.ceil(maxV/50)*50;if(maxV<10)maxV=10;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#e8e8e8';ctx.lineWidth=0.5;
+  for(var i=0;i<=5;i++){var y=pad.t+ch-ch*i/5;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(Math.round(maxV*i/5),pad.l-5,y+3);}
+  ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='center';
+  for(var i=0;i<YR.length;i+=3){var x=pad.l+cw*i/(YR.length-1);ctx.fillText(YR[i],x,H-pad.b+15);}
+  var bw=cw/YR.length*0.7;
+  for(var i=0;i<YR.length;i++){var x=pad.l+cw*i/(YR.length-1)-bw/2;var base=pad.t+ch;for(var a=0;a<AG.length;a++){var h=ch*d[AG[a]][i]/maxV;ctx.fillStyle=colors[a];ctx.fillRect(x,base-h,bw,h);base-=h;}}
+  for(var a=0;a<AG.length;a++){ctx.fillStyle=colors[a];ctx.fillRect(pad.l+a*70,5,12,12);ctx.fillStyle='#333';ctx.font='11px sans-serif';ctx.textAlign='left';ctx.fillText(AG[a],pad.l+14+a*70,15);}
+}
+
+// ===================== CHART 4: First Treatment vs Retreat =====================
+function drawChart4(res){
+  var s=setupCanvas('c4');if(!s)return;
+  var ctx=s.ctx,W=s.w,H=s.h,pad={t:30,r:20,b:40,l:50};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  // Only post-launch years
+  var yrs=[];for(var i=0;i<YR.length;i++){if(YR[i]>=2027)yrs.push(YR[i]);}
+  var ftData=yrs.map(function(y){return res[y].ft;});
+  var rtData=yrs.map(function(y){return res[y].rt;});
+  var maxV=0;for(var i=0;i<yrs.length;i++)maxV=Math.max(maxV,ftData[i]+rtData[i]);
+  maxV=Math.ceil(maxV/50)*50;if(maxV<10)maxV=10;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#e8e8e8';ctx.lineWidth=0.5;
+  for(var i=0;i<=5;i++){var y=pad.t+ch-ch*i/5;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText(Math.round(maxV*i/5),pad.l-5,y+3);}
+  ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='center';
+  for(var i=0;i<yrs.length;i+=3){var x=pad.l+cw*i/(yrs.length-1);ctx.fillText(yrs[i],x,H-pad.b+15);}
+  var bw=cw/yrs.length*0.65;
+  for(var i=0;i<yrs.length;i++){
+    var x=pad.l+cw*i/(yrs.length-1);
+    // First treat (bottom)
+    var h1=ch*ftData[i]/maxV;
+    ctx.fillStyle='#2d5a87';ctx.fillRect(x-bw,h1*-1+pad.t+ch,bw,h1);
+    // Retreat (top, stacked)
+    var h2=ch*rtData[i]/maxV;
+    ctx.fillStyle='#e67e22';ctx.fillRect(x-bw,pad.t+ch-h1-h2,bw,h2);
+    // Percentage label
+    var total=ftData[i]+rtData[i];
+    if(total>0){
+      var pct=(rtData[i]/total*100).toFixed(0);
+      ctx.fillStyle='#e67e22';ctx.font='9px sans-serif';ctx.textAlign='center';
+      ctx.fillText('重治'+pct+'%',x,pad.t+ch-h1-h2-4);
+    }
+  }
+  ctx.fillStyle='#2d5a87';ctx.fillRect(pad.l,5,12,12);ctx.fillStyle='#333';ctx.font='11px sans-serif';ctx.textAlign='left';ctx.fillText('首次治疗(万)',pad.l+16,15);
+  ctx.fillStyle='#e67e22';ctx.fillRect(pad.l+110,5,12,12);ctx.fillText('重治(万)',pad.l+126,15);
+}
+
+// ===================== KPI (dynamic window) =====================
+function drawKPI(res){
+  var pk_yr=2027,pk_v=0;
+  for(var i=0;i<YR.length;i++){var y=YR[i];if(res[y].tt>pk_v){pk_v=res[y].tt;pk_yr=y;}}
+  // Dynamic window: find years with treatment > 100万 and > 10万
+  var win100=[], win10=[];
+  for(var i=0;i<YR.length;i++){var y=YR[i];
+    if(res[y].tt>=100)win100.push(y);
+    if(res[y].tt>=10)win10.push(y);
+  }
+  var winText;
+  if(win100.length>=2) winText=win100[0]+'-'+win100[win100.length-1]+' (>100万/年)';
+  else if(win10.length>=2) winText=win10[0]+'-'+win10[win10.length-1]+' (>10万/年)';
+  else if(win10.length===1) winText=win10[0]+'年 (唯一>10万)';
+  else winText='无 (>10万)';
+
+  var r50=res[2050];
+  document.getElementById('kpis').innerHTML=
+    '<div class="kpi pk"><div class="lb">治疗峰值年</div><div class="vl">'+pk_yr+'年</div><div class="sb">年治疗 '+R(pk_v)+'万</div></div>'+
+    '<div class="kpi tr"><div class="lb">2050年累积治疗</div><div class="vl">'+F(r50.ct)+'<span style="font-size:13px;font-weight:400">万</span></div><div class="sb">当年 '+R(r50.tt)+'万</div></div>'+
+    '<div class="kpi cr"><div class="lb">2050年累积治愈</div><div class="vl">'+F(r50.cc)+'<span style="font-size:13px;font-weight:400">万</span></div><div class="sb">vs CHB&lt;70: '+(r50.c70>0?(r50.cc/r50.c70*100).toFixed(1):'0')+'%</div></div>'+
+    '<div class="kpi win"><div class="lb">市场窗口期</div><div class="vl" style="font-size:16px">'+winText+'</div><div class="sb">随参数动态计算</div></div>';
+}
+
+// ===================== TABLE =====================
+function drawTable(res){
+  var pk_yr=2027,pk_v=0;
+  for(var i=0;i<YR.length;i++){var y=YR[i];if(res[y].tt>pk_v){pk_v=res[y].tt;pk_yr=y;}}
+  var h='<thead><tr><th>年份</th><th>CHB总数</th><th>CHB&lt;70</th><th>可治疗池</th><th>首次治疗</th><th>重治</th><th>总治疗</th><th>新治愈</th><th>累积治愈</th><th>累积治疗</th><th>治愈率</th><th>累积治愈/CHB&lt;70</th></tr></thead><tbody>';
+  for(var i=0;i<YR.length;i++){
+    var y=YR[i];var r=res[y];var cls=y===pk_yr?' class="hl"':'';
+    h+='<tr'+cls+'><td>'+y+'</td><td>'+F(r.ctt)+'</td><td>'+F(r.c70)+'</td><td>'+F(r.pool)+'</td><td>'+F(r.ft)+'</td><td>'+F(r.rt)+'</td><td>'+F(r.tt)+'</td><td>'+F(r.nc)+'</td><td>'+F(r.cc)+'</td><td>'+F(r.ct)+'</td><td>'+(r.cr*100).toFixed(1)+'%</td><td>'+(r.c70>0?(r.cc/r.c70*100).toFixed(1)+'%':'-')+'</td></tr>';
+  }
+  h+='</tbody>';
+  document.getElementById('rtbl').innerHTML=h;
+}
+
+// ===================== BUILD PARAM TABLES =====================
+function buildUP(saved){
+  var h='<tr><th>年龄\\年</th>';for(var i=0;i<YR.length;i++)h+='<th>'+YR[i]+'</th>';h+='</tr>';
+  for(var a=0;a<AG.length;a++){
+    var ag=AG[a];h+='<tr><td>'+ag+'</td>';
+    for(var i=0;i<YR.length;i++){
+      var yr=YR[i];var dv=defUP(ag,yr);
+      var sv=(saved&&saved.up&&saved.up[ag]&&saved.up[ag][yr]!==null)?saved.up[ag][yr]:dv.toFixed(1);
+      h+='<td><input type="number" id="up-'+agid(ag)+'-'+yr+'" value="'+sv+'" step="0.1" min="0" max="100" onchange="go()"></td>';
+    }
+    h+='</tr>';
+  }
+  document.getElementById('tbl-up').innerHTML=h;
+}
+
+function buildCU(saved){
+  var h='<tr><th>治愈率</th>';for(var i=0;i<YR.length;i++)h+='<th>'+YR[i]+'</th>';h+='</tr><tr><td>%</td>';
+  for(var i=0;i<YR.length;i++){
+    var yr=YR[i];var dv=defCU(yr);
+    var sv=(saved&&saved.cu&&saved.cu[yr]!==null)?saved.cu[yr]:dv.toFixed(1);
+    h+='<td><input type="number" id="cu-'+yr+'" value="'+sv+'" step="0.1" min="0" max="100" onchange="go()"></td>';
+  }
+  h+='</tr>';
+  document.getElementById('tbl-cu').innerHTML=h;
+}
+
+function buildRT(saved){
+  var h='<tr><th>年龄\\年</th>';for(var i=0;i<YR.length;i++)h+='<th>'+YR[i]+'</th>';h+='</tr>';
+  for(var a=0;a<AG.length;a++){
+    var ag=AG[a];h+='<tr><td>'+ag+'</td>';
+    for(var i=0;i<YR.length;i++){
+      var yr=YR[i];var dv=defRT(ag,yr);
+      var sv=(saved&&saved.rt&&saved.rt[ag]&&saved.rt[ag][yr]!==null)?saved.rt[ag][yr]:dv.toFixed(1);
+      h+='<td><input type="number" id="rt-'+agid(ag)+'-'+yr+'" value="'+sv+'" step="0.1" min="0" max="100" onchange="go()"></td>';
+    }
+    h+='</tr>';
+  }
+  document.getElementById('tbl-rt').innerHTML=h;
+}
+
+function buildCH(saved){
+  var h='<tr><th>年龄</th>';for(var i=0;i<YR.length;i++)h+='<th>'+YR[i]+'</th>';h+='</tr>';
+  for(var a=0;a<AG5.length;a++){
+    var ag=AG5[a];h+='<tr><td>'+ag+'</td>';
+    for(var i=0;i<YR.length;i++){
+      var yr=YR[i];var dv=D_CHB[yr][ag];
+      var sv=(saved&&saved.chb&&saved.chb[ag]&&saved.chb[ag][yr]!==null)?saved.chb[ag][yr]:dv;
+      h+='<td><input type="number" id="ch-'+agid(ag)+'-'+yr+'" value="'+sv+'" step="1" min="0" onchange="go()"></td>';
+    }
+    h+='</tr>';
+  }
+  document.getElementById('tbl-ch').innerHTML=h;
+}
+
+// ===================== MAIN =====================
+function go(){
+  var P=readP();
+  var res=model(P);
+  saveParams();
+  document.getElementById('save-note').textContent='✅ 参数已自动保存';
+  drawKPI(res);
+  drawChart1(res);drawChart2(res);drawChart3(res);drawChart4(res);
+  drawTable(res);
+}
+
+function reset(){
+  try{localStorage.removeItem(LS_KEY);}catch(e){}
+  buildUP(null);buildCU(null);buildRT(null);buildCH(null);
+  document.getElementById('at0').value=0.06;
+  document.getElementById('at1').value=0.03;
+  document.getElementById('at2').value=0.04;
+  document.getElementById('at3').value=0.06;
+  go();
+  document.getElementById('save-note').textContent='↩ 已恢复默认参数';
+}
+
+function csv(){
+  var P=readP();var res=model(P);
+  var s='年份,CHB总数,CHB<70,可治疗池,首次治疗,重治,总治疗,新治愈,累积治愈,累积治疗,治愈率\n';
+  for(var i=0;i<YR.length;i++){var y=YR[i];var r=res[y];s+=y+','+R(r.ctt)+','+R(r.c70)+','+R(r.pool)+','+R(r.ft)+','+R(r.rt)+','+R(r.tt)+','+R(r.nc)+','+R(r.cc)+','+R(r.ct)+','+(r.cr*100).toFixed(1)+'%\n';}
+  var blob=new Blob(['\ufeff'+s],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='CHB市场测算_v3.csv';a.click();
+}
+
+var resizeTimer;
+window.addEventListener('resize',function(){clearTimeout(resizeTimer);resizeTimer=setTimeout(function(){go();},200);});
+
+// Init: try load saved params first
+var saved=loadParams();
+buildUP(saved);buildCU(saved);buildRT(saved);buildCH(saved);
+if(saved&&saved.at){
+  document.getElementById('at0').value=saved.at[0];
+  document.getElementById('at1').value=saved.at[1];
+  document.getElementById('at2').value=saved.at[2];
+  document.getElementById('at3').value=saved.at[3];
+}
+setTimeout(function(){go();},100);
+</script>
+</body>
+</html>
